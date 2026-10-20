@@ -76,6 +76,48 @@ export function useLocalStorage(key, initialValue) {
 export default function App() {
   // TODO M4 data-model:
   //   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', [/* 3-4 seed tasks */]);
+    const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', [
+    {
+      id: '1',
+      title: 'Plan the project layout',
+      description: 'Decide how the board should look',
+      type: 'feature',
+      status: 'todo',
+      assignee: 'Teammate A',
+      dueDate: null,
+      createdDate: '2026-10-20',
+    },
+    {
+      id: '2',
+      title: 'Create task cards',
+      description: 'Display tasks on the board',
+      type: 'feature',
+      status: 'in-progress',
+      assignee: 'Teammate B',
+      dueDate: null,
+      createdDate: '2026-10-20',
+    },
+    {
+      id: '3',
+      title: 'Check the design',
+      description: 'Review colours and layout',
+      type: 'bug',
+      status: 'review',
+      assignee: 'Teammate C',
+      dueDate: null,
+      createdDate: '2026-10-20',
+    },
+    {
+      id: '4',
+      title: 'Set up React project',
+      description: 'Install dependencies and run the app',
+      type: 'feature',
+      status: 'done',
+      assignee: 'Teammate A',
+      dueDate: null,
+      createdDate: '2026-10-20',
+    },
+  ]);
   //
   // TODO M5 crud-modal:
   //   const [editing, setEditing] = useState(null);
@@ -109,9 +151,42 @@ export default function App() {
           Add a "+" button that opens a modal with every Task field.
           Clicking a card should open the same modal in edit mode.
       */}
-      <main className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400">
-        Build the four-column board here · M4
-      </main>
+<main className="grid grid-cols-1 gap-4 md:grid-cols-4">
+  {STAGES.map((stage) => (
+    <section
+      key={stage.id}
+      className={`min-h-64 rounded-lg p-4 ${
+        stage.id === 'todo'
+          ? 'bg-column-todo'
+          : stage.id === 'in-progress'
+          ? 'bg-column-progress'
+          : stage.id === 'review'
+          ? 'bg-column-review'
+          : 'bg-column-done'
+      }`}
+    >
+      <h2 className="mb-4 font-semibold text-text-primary">
+        {stage.label}
+      </h2>
+
+      {tasks
+        .filter((task) => task.status === stage.id)
+        .map((task) => (
+          <div
+            key={task.id}
+            className="mb-3 rounded border border-gray-300 bg-white p-3"
+          >
+            <h3 className="font-medium text-text-primary">
+              {task.title}
+            </h3>
+            <p className="mt-1 text-sm text-text-muted">
+              {task.description}
+            </p>
+          </div>
+        ))}
+    </section>
+  ))}
+</main>
     </div>
   );
 }
