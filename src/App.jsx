@@ -144,7 +144,14 @@ export default function App() {
     initialTasks
   );
 
-  // editingId is null when creating a new task.
+  const [activePage, setActivePage] = useState('board');
+  const [teamMembers, setTeamMembers] = useLocalStorage('vibetracker.team', TEAM);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [editingMember, setEditingMember] = useState(null);
+  const [editedMemberName, setEditedMemberName] = useState('');
+  const [memberNotice, setMemberNotice] = useState('');
+  const [memberToRemove, setMemberToRemove] = useState(null);
+
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(null);
   const [deleteRequested, setDeleteRequested] = useState(false);
@@ -201,7 +208,7 @@ const overdueTasks = tasks.filter(
     task.dueDate < todayString
 ).length;
 
-const teamWorkload = TEAM.map((member) => ({
+const teamWorkload = teamMembers.map((member) => ({
   name: member,
   count: tasks.filter(
     (task) =>
@@ -238,9 +245,111 @@ function clearFilters() {
   setPriorityFilter('all');
 }
 
+function renameTeamMember(event) {
+  event.preventDefault();
+
+  const newName = editedMemberName.trim();
+
+  if (!newName || editingMember === null) return;
+
+  const duplicate = teamMembers.some(
+    (member) =>
+      member !== editingMember &&
+      member.toLowerCase() === newName.toLowerCase()
+  );
+
+  if (duplicate) {
+    alert('This team member already exists.');
+    return;
+  }
+
+  setTeamMembers((current) =>
+    current.map((member) =>
+      member === editingMember ? newName : member
+    )
+  );
+
+  setTasks((current) =>
+    current.map((task) =>
+      task.assignee === editingMember
+        ? { ...task, assignee: newName }
+        : task
+    )
+  );
+
+  if (assigneeFilter === editingMember) {
+    setAssigneeFilter(newName);
+  }
+
+  setEditingMember(null);
+  setEditedMemberName('');
+}
+
+function removeTeamMember(memberName) {
+  const assignedTasks = tasks.filter(
+    (task) => task.assignee === memberName
+  );
+
+if (assignedTasks.length > 0) {
+  setMemberNotice(
+    `${memberName} has ${assignedTasks.length} assigned ${
+      assignedTasks.length === 1 ? 'task' : 'tasks'
+    }. Reassign them before removing this member.`
+  );
+  return;
+}
+
+setMemberNotice('');
+
+setMemberToRemove(memberName);
+}
+
+function confirmRemoveTeamMember() {
+  if (memberToRemove === null) return;
+
+  if (tasks.some((task) => task.assignee === memberToRemove)) {
+    setMemberNotice(
+      `${memberToRemove} still has assigned tasks. Reassign them before removing this member.`
+    );
+    setMemberToRemove(null);
+    return;
+  }
+
+  setTeamMembers((current) =>
+    current.filter((member) => member !== memberToRemove)
+  );
+
+  if (editingMember === memberToRemove) {
+    setEditingMember(null);
+    setEditedMemberName('');
+  }
+
+  setMemberToRemove(null);
+}
+
+function addTeamMember(event) {
+  event.preventDefault();
+
+  const name = newMemberName.trim();
+
+  if (!name) return;
+
+  if (teamMembers.some((member) => member.toLowerCase() === name.toLowerCase())) {
+    alert('This team member already exists.');
+    return;
+  }
+
+  setTeamMembers((current) => [...current, name]);
+  setNewMemberName('');
+}
+
   function openNewTask(status = 'todo') {
     setEditingId(null);
-    setForm({ ...emptyTask, status });
+    setForm({
+  ...emptyTask,
+  status,
+  assignee: teamMembers[0] || '',
+});
     setDeleteRequested(false);
   }
 
@@ -324,11 +433,7 @@ function clearFilters() {
         title,
         description: form.description.trim(),
         dueDate: form.dueDate || null,
-        createdDate: [
-  new Date().getFullYear(),
-  String(new Date().getMonth() + 1).padStart(2, '0'),
-  String(new Date().getDate()).padStart(2, '0'),
-].join('-'),
+        createdDate: new Date().toLocaleDateString('en-CA'),
       };
 
       setTasks((current) => [...current, newTask]);
@@ -383,20 +488,43 @@ async function copyAiPrompt(task) {
           </p>
         </div>
 
-        <nav aria-label="Main navigation">
-          <div
-            aria-current="page"
-            className="rounded-lg bg-[#6C5CE7] px-4 py-3 text-sm font-semibold"
-          >
-            Board
-          </div>
-          <p className="mt-4 px-4 text-xs leading-5 text-slate-400">
-            Manage your team's project tasks.
-          </p>
-        </nav>
+<nav aria-label="Main navigation" className="space-y-2">
+  <button
+    type="button"
+    onClick={() => setActivePage('board')}
+    aria-current={activePage === 'board' ? 'page' : undefined}
+    className={`w-full rounded-lg px-4 py-3 text-left text-sm font-semibold ${
+      activePage === 'board'
+        ? 'bg-[#6C5CE7] text-white'
+        : 'text-slate-300 hover:bg-slate-700'
+    }`}
+  >
+    Board
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setActivePage('team')}
+    aria-current={activePage === 'team' ? 'page' : undefined}
+    className={`w-full rounded-lg px-4 py-3 text-left text-sm font-semibold ${
+      activePage === 'team'
+        ? 'bg-[#6C5CE7] text-white'
+        : 'text-slate-300 hover:bg-slate-700'
+    }`}
+  >
+    Team
+  </button>
+
+  <p className="mt-4 px-4 text-xs leading-5 text-slate-400">
+    Manage your team's project tasks.
+  </p>
+</nav>
       </aside>
 
       <div className="min-w-0 flex-1 px-4 py-7 sm:px-6 lg:px-8">
+
+          {activePage === 'board' ? (
+          <>
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-700">
@@ -534,7 +662,7 @@ async function copyAiPrompt(task) {
         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
       >
         <option value="all">All team members</option>
-        {TEAM.map((member) => (
+        {teamMembers.map((member) => (
           <option key={member} value={member}>
             {member}
           </option>
@@ -691,6 +819,290 @@ async function copyAiPrompt(task) {
             );
           })}
         </main>
+        </>
+      ) : (
+
+<section aria-label="Team workspace" className="space-y-8">
+  <header className="border-b border-slate-200 pb-6">
+    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-700">
+      Project Workspace / Team
+    </p>
+    <h1 className="text-3xl font-bold tracking-tight">
+      Your development team
+    </h1>
+    <p className="mt-2 text-sm text-slate-600">
+      People, responsibilities and active work in one place.
+    </p>
+  </header>
+
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    {[
+      { label: 'Members', value: teamMembers.length },
+      {
+        label: 'Active tasks',
+        value: tasks.filter((task) => task.status !== 'done').length,
+      },
+      {
+        label: 'Unassigned',
+        value: tasks.filter(
+          (task) => !task.assignee || task.assignee === 'Unassigned'
+        ).length,
+      },
+    ].map((stat) => (
+      <div
+        key={stat.label}
+        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+      >
+        <p className="text-sm text-slate-600">{stat.label}</p>
+        <p className="mt-2 text-3xl font-bold">{stat.value}</p>
+      </div>
+    ))}
+  </div>
+
+  <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 className="text-lg font-bold">Workload overview</h2>
+      <p className="text-sm text-slate-600">Unfinished tasks</p>
+    </div>
+
+    <div className="mt-6 space-y-5">
+      {teamWorkload.map((member) => {
+        const maximum = Math.max(
+          1,
+          ...teamWorkload.map((item) => item.count)
+        );
+
+        return (
+          <div key={member.name}>
+            <div className="mb-2 flex justify-between gap-3 text-sm">
+              <span className="font-medium">{member.name}</span>
+              <span className="text-slate-600">
+                {member.count} {member.count === 1 ? 'task' : 'tasks'}
+              </span>
+            </div>
+
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-[#6C5CE7]"
+                style={{
+                  width: `${(member.count / maximum) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <section>
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <h2 className="text-lg font-bold">Team directory</h2>
+<span className="text-sm text-slate-600">
+  {teamMembers.length} members
+</span>
+    </div>
+
+{memberNotice && (
+  <div
+    role="alert"
+    className="mb-4 flex items-start justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4"
+  >
+    <div className="flex gap-3">
+      <span aria-hidden="true" className="text-lg text-amber-700">
+        ⚠
+      </span>
+
+      <div>
+        <p className="text-sm font-bold text-amber-950">
+          Member cannot be removed
+        </p>
+        <p className="mt-1 text-sm leading-6 text-amber-900">
+          {memberNotice}
+        </p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      onClick={() => setMemberNotice('')}
+      aria-label="Dismiss warning"
+      className="rounded-md px-2 py-1 text-sm font-semibold text-amber-900 hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-amber-700"
+    >
+      ✕
+    </button>
+  </div>
+)}
+
+
+{memberToRemove !== null && (
+  <div
+    role="group"
+    aria-labelledby="remove-member-title"
+    className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-5 shadow-sm"
+  >
+    <div className="flex items-start gap-3">
+      <span aria-hidden="true" className="text-xl text-rose-700">
+        ⚠
+      </span>
+
+      <div>
+        <h3
+          id="remove-member-title"
+          className="text-base font-bold text-rose-950"
+        >
+          Remove team member?
+        </h3>
+
+        <p className="mt-2 text-sm leading-6 text-rose-900">
+          Are you sure you want to remove{' '}
+          <strong>{memberToRemove}</strong> from the team?
+          This action cannot be undone.
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-5 flex flex-wrap gap-3">
+      <button
+        type="button"
+        onClick={confirmRemoveTeamMember}
+        className="rounded-lg bg-rose-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-800"
+      >
+        Yes, remove member
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setMemberToRemove(null)}
+        className="rounded-lg border border-rose-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-rose-100"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
+
+    <form
+  onSubmit={addTeamMember}
+  className="mb-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row"
+>
+  <label htmlFor="new-member-name" className="sr-only">
+    New team member name
+  </label>
+
+  <input
+    id="new-member-name"
+    type="text"
+    value={newMemberName}
+    onChange={(event) => setNewMemberName(event.target.value)}
+    placeholder="Enter team member name"
+    maxLength={60}
+    required
+    className="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
+  />
+
+  <button
+    type="submit"
+    className="rounded-lg bg-[#6C5CE7] px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
+  >
+    + Add Member
+  </button>
+</form>
+
+    <div className="space-y-3">
+      {teamWorkload.map((member, index) => (
+        <div
+          key={member.name}
+          className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#1E2433] text-sm font-bold text-white">
+            {String(index + 1).padStart(2, '0')}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">{member.name}</p>
+            <p className="text-sm text-slate-600">
+              Team member
+            </p>
+          </div>
+
+          <div className="text-right">
+            <p className="text-lg font-bold">{member.count}</p>
+            <p className="text-xs text-slate-600">open tasks</p>
+          </div>
+
+          <button
+  type="button"
+  onClick={() => {
+    setEditingMember(member.name);
+    setEditedMemberName(member.name);
+  }}
+  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-violet-700"
+  aria-label={`Edit ${member.name}`}
+>
+  Edit
+</button>
+
+<button
+  type="button"
+  onClick={() => removeTeamMember(member.name)}
+  aria-label={`Remove ${member.name}`}
+  className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-rose-700"
+>
+  Remove
+</button>
+        </div>
+      ))}
+    </div>
+    {editingMember !== null && (
+  <form
+    onSubmit={renameTeamMember}
+    className="mt-4 rounded-xl border border-violet-200 bg-white p-5 shadow-sm"
+  >
+    <h3 className="mb-3 font-bold">
+      Edit {editingMember}
+    </h3>
+
+    <label
+      htmlFor="edit-member-name"
+      className="mb-2 block text-sm font-semibold"
+    >
+      Member name
+    </label>
+
+    <input
+      id="edit-member-name"
+      type="text"
+      required
+      maxLength={60}
+      value={editedMemberName}
+      onChange={(event) => setEditedMemberName(event.target.value)}
+      className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-violet-700"
+    />
+
+    <div className="mt-4 flex gap-3">
+      <button
+        type="submit"
+        className="rounded-lg bg-[#6C5CE7] px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800"
+      >
+        Save changes
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setEditingMember(null)}
+        className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+)}
+
+  </section>
+</section>
+
+      )}
       </div>
 
       {form !== null && (
@@ -816,7 +1228,7 @@ async function copyAiPrompt(task) {
                     onChange={(event) => updateForm('assignee', event.target.value)}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
                   >
-                    {TEAM.map((member) => (
+                    {teamMembers.map((member) => (
                       <option key={member} value={member}>
                         {member}
                       </option>
