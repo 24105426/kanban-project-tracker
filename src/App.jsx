@@ -163,6 +163,32 @@ export default function App() {
     (task) => task.status === 'review'
   ).length;
 
+  const completionPercentage = tasks.length
+  ? Math.round((completedTasks / tasks.length) * 100)
+  : 0;
+
+const today = new Date();
+const todayString = [
+  today.getFullYear(),
+  String(today.getMonth() + 1).padStart(2, '0'),
+  String(today.getDate()).padStart(2, '0'),
+].join('-');
+
+const overdueTasks = tasks.filter(
+  (task) =>
+    task.status !== 'done' &&
+    task.dueDate &&
+    task.dueDate < todayString
+).length;
+
+const teamWorkload = TEAM.map((member) => ({
+  name: member,
+  count: tasks.filter(
+    (task) =>
+      task.assignee === member && task.status !== 'done'
+  ).length,
+}));
+
   const filteredTasks = tasks.filter((task) => {
   const searchText = search.trim().toLowerCase();
 
@@ -334,6 +360,65 @@ function clearFilters() {
             ))}
           </div>
         </section>
+<section
+  aria-label="Project insights"
+  className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2"
+>
+  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h2 className="text-base font-bold">Project progress</h2>
+    <p className="mt-2 text-3xl font-bold text-violet-700">
+      {completionPercentage}%
+    </p>
+    <p className="mt-1 text-sm text-slate-600">
+      {completedTasks} of {tasks.length} tasks completed
+    </p>
+
+    <div
+      role="progressbar"
+      aria-label="Project completion"
+      aria-valuenow={completionPercentage}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200"
+    >
+      <div
+        className="h-full rounded-full bg-[#6C5CE7]"
+        style={{ width: `${completionPercentage}%` }}
+      />
+    </div>
+
+    <p className="mt-5 text-sm text-slate-600">
+      <span className="font-bold text-rose-700">
+        {overdueTasks}
+      </span>{' '}
+      overdue {overdueTasks === 1 ? 'task' : 'tasks'}
+    </p>
+  </div>
+
+  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h2 className="text-base font-bold">Team workload</h2>
+    <p className="mt-1 text-sm text-slate-600">
+      Tasks still in progress across the team
+    </p>
+
+    <div className="mt-4 space-y-3">
+      {teamWorkload.map((member) => (
+        <div
+          key={member.name}
+          className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3"
+        >
+          <span className="text-sm font-medium">
+            {member.name}
+          </span>
+          <span className="text-sm font-semibold text-violet-700">
+            {member.count}{' '}
+            {member.count === 1 ? 'task' : 'tasks'}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
 <section
   aria-label="Search and filter tasks"
   className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
