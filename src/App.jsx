@@ -147,6 +147,9 @@ export default function App() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(null);
   const [deleteRequested, setDeleteRequested] = useState(false);
+  const [search, setSearch] = useState('');
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
 
   const completedTasks = tasks.filter(
     (task) => task.status === 'done'
@@ -159,6 +162,35 @@ export default function App() {
   const reviewTasks = tasks.filter(
     (task) => task.status === 'review'
   ).length;
+
+  const filteredTasks = tasks.filter((task) => {
+  const searchText = search.trim().toLowerCase();
+
+  const matchesSearch =
+    task.title.toLowerCase().includes(searchText) ||
+    (task.description || '').toLowerCase().includes(searchText);
+
+  const matchesAssignee =
+    assigneeFilter === 'all' ||
+    task.assignee === assigneeFilter;
+
+  const matchesPriority =
+    priorityFilter === 'all' ||
+    (task.priority || 'medium') === priorityFilter;
+
+  return matchesSearch && matchesAssignee && matchesPriority;
+});
+
+const filtersActive =
+  search !== '' ||
+  assigneeFilter !== 'all' ||
+  priorityFilter !== 'all';
+
+function clearFilters() {
+  setSearch('');
+  setAssigneeFilter('all');
+  setPriorityFilter('all');
+}
 
   function openNewTask(status = 'todo') {
     setEditingId(null);
@@ -302,13 +334,94 @@ export default function App() {
             ))}
           </div>
         </section>
+<section
+  aria-label="Search and filter tasks"
+  className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+>
+  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <div>
+      <label
+        htmlFor="task-search"
+        className="mb-1 block text-sm font-semibold text-slate-700"
+      >
+        Search tasks
+      </label>
+      <input
+        id="task-search"
+        type="search"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search title or description"
+        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
+      />
+    </div>
+
+    <div>
+      <label
+        htmlFor="assignee-filter"
+        className="mb-1 block text-sm font-semibold text-slate-700"
+      >
+        Assigned to
+      </label>
+      <select
+        id="assignee-filter"
+        value={assigneeFilter}
+        onChange={(event) => setAssigneeFilter(event.target.value)}
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
+      >
+        <option value="all">All team members</option>
+        {TEAM.map((member) => (
+          <option key={member} value={member}>
+            {member}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div>
+      <label
+        htmlFor="priority-filter"
+        className="mb-1 block text-sm font-semibold text-slate-700"
+      >
+        Priority
+      </label>
+      <select
+        id="priority-filter"
+        value={priorityFilter}
+        onChange={(event) => setPriorityFilter(event.target.value)}
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
+      >
+        <option value="all">All priorities</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+  </div>
+
+  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+    <p className="text-sm text-slate-600" aria-live="polite">
+      Showing {filteredTasks.length} of {tasks.length} tasks
+    </p>
+
+    {filtersActive && (
+      <button
+        type="button"
+        onClick={clearFilters}
+        className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-violet-700"
+      >
+        Clear filters
+      </button>
+    )}
+  </div>
+</section>
 
         <main
           aria-label="Project task board"
           className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 2xl:grid-cols-4"
         >
           {STAGES.map((stage) => {
-            const stageTasks = tasks.filter(
+            const stageTasks = filteredTasks.filter(
               (task) => task.status === stage.id
             );
 
@@ -338,11 +451,13 @@ export default function App() {
                   </div>
                 </div>
 
-                {stageTasks.length === 0 && (
-                  <p className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-                    No tasks in this stage yet.
-                  </p>
-                )}
+{stageTasks.length === 0 && (
+  <p className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+    {tasks.some((task) => task.status === stage.id)
+      ? 'No tasks match your search or filters.'
+      : 'No tasks in this stage yet.'}
+  </p>
+)}
 
                 <div className="space-y-3">
                   {stageTasks.map((task) => (
