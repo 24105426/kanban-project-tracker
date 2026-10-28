@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export const STAGES = [
   { id: 'todo', label: 'To Do' },
@@ -153,6 +153,23 @@ export default function App() {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [copiedTaskId, setCopiedTaskId] = useState(null);
   const [copyErrorTaskId, setCopyErrorTaskId] = useState(null);
+  const modalRef = useRef(null);
+  const previousFocusRef = useRef(null);
+
+  const isModalOpen = form !== null;
+
+useEffect(() => {
+  if (!isModalOpen) return;
+
+  previousFocusRef.current = document.activeElement;
+
+  const titleInput = modalRef.current?.querySelector('#task-title');
+  titleInput?.focus();
+
+  return () => {
+    previousFocusRef.current?.focus();
+  };
+}, [isModalOpen]);
 
   const completedTasks = tasks.filter(
     (task) => task.status === 'done'
@@ -248,6 +265,33 @@ function clearFilters() {
     setDeleteRequested(false);
   }
 
+  function handleModalKeyDown(event) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeModal();
+    return;
+  }
+
+  if (event.key !== 'Tab') return;
+
+  const focusable = modalRef.current?.querySelectorAll(
+    'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
+  );
+
+  if (!focusable?.length) return;
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -280,7 +324,11 @@ function clearFilters() {
         title,
         description: form.description.trim(),
         dueDate: form.dueDate || null,
-        createdDate: new Date().toLocaleDateString('en-CA'),
+        createdDate: [
+  new Date().getFullYear(),
+  String(new Date().getMonth() + 1).padStart(2, '0'),
+  String(new Date().getDate()).padStart(2, '0'),
+].join('-'),
       };
 
       setTasks((current) => [...current, newTask]);
@@ -648,9 +696,11 @@ async function copyAiPrompt(task) {
       {form !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4">
           <div
+            ref={modalRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="task-modal-title"
+            onKeyDown={handleModalKeyDown}
             className="my-auto w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
           >
             <div className="mb-5 flex items-center justify-between">
@@ -815,12 +865,13 @@ async function copyAiPrompt(task) {
     <button
       type="button"
       onClick={() => {
-        const task = tasks.find((item) => item.id === editingId);
-        if (task) {
-          setCopiedTaskId(null);
-          setCopyErrorTaskId(null);
-          copyAiPrompt(task);
-        }
+const task = tasks.find((item) => item.id === editingId);
+
+if (task) {
+  setCopiedTaskId(null);
+  setCopyErrorTaskId(null);
+  copyAiPrompt({ ...task, ...form });
+}
       }}
       className="rounded-lg border border-violet-300 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 hover:bg-violet-100"
     >
