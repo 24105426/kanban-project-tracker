@@ -1,19 +1,6 @@
 
-import { useState, useEffect } from 'react';
-/**
- * @typedef {Object} Task
- * @property {string} id
- * @property {string} title
- * @property {string} description
- * @property {'feature'|'bug'} type
- * @property {'todo'|'in-progress'|'review'|'done'} status
- * @property {string} assignee
- * @property {string|null} dueDate     ISO 'YYYY-MM-DD'
- * @property {string} createdDate      ISO 'YYYY-MM-DD'
- */
+import { useEffect, useState } from 'react';
 
-// The four columns of the board, in render order.
-// Use these IDs everywhere — do not invent new ones.
 export const STAGES = [
   { id: 'todo', label: 'To Do' },
   { id: 'in-progress', label: 'In Progress' },
@@ -21,21 +8,13 @@ export const STAGES = [
   { id: 'done', label: 'Done' },
 ];
 
-// Replace these placeholders with the three names from PRD §8 before M4.
-// They become the only valid values for `Task.assignee`.
 export const TEAM = ['Teammate A', 'Teammate B', 'Teammate C'];
 
-/**
- * A tiny localStorage hook — survives reloads, no library needed.
- *
- * Usage:
- *   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', []);
- */
 export function useLocalStorage(key, initialValue) {
   const [value, setValue] = useState(() => {
     try {
-      const raw = window.localStorage.getItem(key);
-      return raw != null ? JSON.parse(raw) : initialValue;
+      const saved = window.localStorage.getItem(key);
+      return saved !== null ? JSON.parse(saved) : initialValue;
     } catch {
       return initialValue;
     }
@@ -45,64 +24,82 @@ export function useLocalStorage(key, initialValue) {
     try {
       window.localStorage.setItem(key, JSON.stringify(value));
     } catch {
-      /* quota or private-mode error — silently ignore for hackathon */
+      // The app can still run if browser storage is unavailable.
     }
   }, [key, value]);
 
   return [value, setValue];
 }
 
-export default function App() {
-  // TODO M4 data-model:
-  //   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', [/* 3-4 seed tasks */]);
-  const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', [
-    {
-      id: '1',
-      title: 'Plan the project layout',
-      description: 'Decide how the board should look',
-      type: 'feature',
-      status: 'todo',
-      assignee: 'Teammate A',
-      dueDate: null,
-      createdDate: '2026-10-20',
-    },
-    {
-      id: '2',
-      title: 'Create task cards',
-      description: 'Display tasks on the board',
-      type: 'feature',
-      status: 'in-progress',
-      assignee: 'Teammate B',
-      dueDate: null,
-      createdDate: '2026-10-20',
-    },
-    {
-      id: '3',
-      title: 'Check the design',
-      description: 'Review colours and layout',
-      type: 'bug',
-      status: 'review',
-      assignee: 'Teammate C',
-      dueDate: null,
-      createdDate: '2026-10-20',
-    },
-    {
-      id: '4',
-      title: 'Set up React project',
-      description: 'Install dependencies and run the app',
-      type: 'feature',
-      status: 'done',
-      assignee: 'Teammate A',
-      dueDate: null,
-      createdDate: '2026-10-20',
-    },
-  ]);
+const initialTasks = [
+  {
+    id: '1',
+    title: 'Plan the project layout',
+    description: 'Decide how the board should look',
+    type: 'feature',
+    status: 'todo',
+    assignee: 'Teammate A',
+    dueDate: null,
+    createdDate: '2026-10-20',
+  },
+  {
+    id: '2',
+    title: 'Create task cards',
+    description: 'Display tasks on the board',
+    type: 'feature',
+    status: 'in-progress',
+    assignee: 'Teammate B',
+    dueDate: null,
+    createdDate: '2026-10-20',
+  },
+  {
+    id: '3',
+    title: 'Check the design',
+    description: 'Review colours and layout',
+    type: 'bug',
+    status: 'review',
+    assignee: 'Teammate C',
+    dueDate: null,
+    createdDate: '2026-10-20',
+  },
+  {
+    id: '4',
+    title: 'Set up React project',
+    description: 'Install dependencies and run the app',
+    type: 'feature',
+    status: 'done',
+    assignee: 'Teammate A',
+    dueDate: null,
+    createdDate: '2026-10-20',
+  },
+];
 
-  // TODO M5 crud-modal:
-  //   const [editing, setEditing] = useState(null);
-  //
-  // TODO M11 anchors:
-  //   const [anchors, setAnchors] = useLocalStorage('vibetracker.anchors', [...]);
+const emptyTask = {
+  title: '',
+  description: '',
+  type: 'feature',
+  status: 'todo',
+  assignee: TEAM[0],
+  dueDate: '',
+};
+
+const stageColours = {
+  todo: 'bg-slate-100 border-slate-200',
+  'in-progress': 'bg-violet-50 border-violet-200',
+  review: 'bg-amber-50 border-amber-200',
+  done: 'bg-emerald-50 border-emerald-200',
+};
+
+export default function App() {
+  const [tasks, setTasks] = useLocalStorage(
+    'vibetracker.tasks',
+    initialTasks
+  );
+
+  // editingId is null when creating a new task.
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(null);
+  const [deleteRequested, setDeleteRequested] = useState(false);
 
   const completedTasks = tasks.filter(
     (task) => task.status === 'done'
@@ -116,16 +113,81 @@ export default function App() {
     (task) => task.status === 'review'
   ).length;
 
-  const stageColours = {
-    todo: 'bg-slate-100 border-slate-200',
-    'in-progress': 'bg-violet-50 border-violet-200',
-    review: 'bg-amber-50 border-amber-200',
-    done: 'bg-emerald-50 border-emerald-200',
-  };
+  function openNewTask(status = 'todo') {
+    setEditingId(null);
+    setForm({ ...emptyTask, status });
+    setDeleteRequested(false);
+  }
+
+  function openEditTask(task) {
+    setEditingId(task.id);
+    setForm({
+      title: task.title,
+      description: task.description,
+      type: task.type,
+      status: task.status,
+      assignee: task.assignee,
+      dueDate: task.dueDate || '',
+    });
+    setDeleteRequested(false);
+  }
+
+  function closeModal() {
+    setForm(null);
+    setEditingId(null);
+    setDeleteRequested(false);
+  }
+
+  function updateForm(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function saveTask(event) {
+    event.preventDefault();
+
+    const title = form.title.trim();
+
+    if (!title) return;
+
+    if (editingId !== null) {
+      setTasks((current) =>
+        current.map((task) =>
+          task.id === editingId
+            ? {
+                ...task,
+                ...form,
+                title,
+                description: form.description.trim(),
+                dueDate: form.dueDate || null,
+              }
+            : task
+        )
+      );
+    } else {
+      const newTask = {
+        ...form,
+        id: crypto.randomUUID(),
+        title,
+        description: form.description.trim(),
+        dueDate: form.dueDate || null,
+        createdDate: new Date().toLocaleDateString('en-CA'),
+      };
+
+      setTasks((current) => [...current, newTask]);
+    }
+
+    closeModal();
+  }
+
+  function deleteTask() {
+    setTasks((current) =>
+      current.filter((task) => task.id !== editingId)
+    );
+    closeModal();
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F6F8] text-slate-900 lg:flex">
-      {/* Sidebar */}
       <aside className="bg-[#1E2433] px-6 py-6 text-white lg:min-h-screen lg:w-60 lg:shrink-0">
         <div className="mb-8">
           <p className="text-lg font-bold tracking-tight">
@@ -143,61 +205,48 @@ export default function App() {
           >
             Board
           </div>
-
           <p className="mt-4 px-4 text-xs leading-5 text-slate-400">
-            /
+            Manage your team's project tasks.
           </p>
         </nav>
       </aside>
 
-      {/* Main workspace */}
       <div className="min-w-0 flex-1 px-4 py-7 sm:px-6 lg:px-8">
-        <header className="mb-8 border-b border-slate-200 pb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-700">
-            Team workspace / Board
-          </p>
+        <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-700">
+              Team workspace / Board
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Kanban Project Tracker
+            </h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Plan, track and deliver software projects.
+            </p>
+          </div>
 
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Kanban Project Tracker
-          </h1>
-
-          <p className="mt-2 text-sm text-slate-600">
-            Plan, track and deliver software projects.
-          </p>
+          <button
+            type="button"
+            onClick={() => openNewTask()}
+            className="rounded-lg bg-[#6C5CE7] px-5 py-3 text-sm font-semibold text-white hover:bg-violet-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
+          >
+            + New Task
+          </button>
         </header>
 
-        {/* Overview statistics */}
         <section aria-label="Project overview" className="mb-8">
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {[
-              {
-                label: 'Total tasks',
-                value: tasks.length,
-                colour: 'text-slate-900',
-              },
-              {
-                label: 'In progress',
-                value: inProgressTasks,
-                colour: 'text-violet-700',
-              },
-              {
-                label: 'In review',
-                value: reviewTasks,
-                colour: 'text-amber-700',
-              },
-              {
-                label: 'Completed',
-                value: completedTasks,
-                colour: 'text-emerald-700',
-              },
+              { label: 'Total tasks', value: tasks.length, colour: 'text-slate-900' },
+              { label: 'In progress', value: inProgressTasks, colour: 'text-violet-700' },
+              { label: 'In review', value: reviewTasks, colour: 'text-amber-700' },
+              { label: 'Completed', value: completedTasks, colour: 'text-emerald-700' },
             ].map((stat) => (
               <div
                 key={stat.label}
                 className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
               >
-                <p className="text-sm text-slate-600">
-                  {stat.label}
-                </p>
+                <p className="text-sm text-slate-600">{stat.label}</p>
                 <p className={`mt-2 text-3xl font-bold ${stat.colour}`}>
                   {stat.value}
                 </p>
@@ -206,20 +255,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* TODO M11 anchors: render the Anchor Board (Presentation / Demo / Report / Documentation) above the board. */}
-
-        {/*
-          TODO M4 data-model:
-            Render a Kanban board with the four columns from STAGES.
-            Each column should display the tasks whose status matches its id.
-            Pre-populate 3-4 mock tasks so the board isn't empty on first load.
-
-          TODO M5 crud-modal:
-            Add a "+" button that opens a modal with every Task field.
-            Clicking a card should open the same modal in edit mode.
-        */}
-
-        {/* Kanban board */}
         <main
           aria-label="Project task board"
           className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 2xl:grid-cols-4"
@@ -235,14 +270,24 @@ export default function App() {
                 aria-label={`${stage.label} tasks`}
                 className={`min-h-80 rounded-xl border p-4 ${stageColours[stage.id]}`}
               >
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-slate-900">
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-bold">
                     {stage.label}
                   </h2>
 
-                  <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                    {stageTasks.length} tasks
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                      {stageTasks.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openNewTask(stage.id)}
+                      aria-label={`Add task to ${stage.label}`}
+                      className="rounded-md bg-white px-2 py-1 text-sm font-bold text-violet-700 hover:bg-violet-100 focus-visible:outline-2 focus-visible:outline-violet-700"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
 
                 {stageTasks.length === 0 && (
@@ -253,23 +298,24 @@ export default function App() {
 
                 <div className="space-y-3">
                   {stageTasks.map((task) => (
-                    <article
+                    <button
                       key={task.id}
-                      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                      type="button"
+                      onClick={() => openEditTask(task)}
+                      aria-label={`Edit task: ${task.title}`}
+                      className="block w-full rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
                     >
-                      <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-md px-2 py-1 text-xs font-semibold ${
-                            task.type === 'bug'
-                              ? 'bg-rose-100 text-rose-800'
-                              : 'bg-violet-100 text-violet-800'
-                          }`}
-                        >
-                          {task.type === 'bug' ? 'Bug' : 'Feature'}
-                        </span>
-                      </div>
+                      <span
+                        className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${
+                          task.type === 'bug'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-violet-100 text-violet-800'
+                        }`}
+                      >
+                        {task.type === 'bug' ? 'Bug' : 'Feature'}
+                      </span>
 
-                      <h3 className="text-sm font-semibold leading-5 text-slate-900">
+                      <h3 className="mt-3 text-sm font-semibold leading-5">
                         {task.title}
                       </h3>
 
@@ -277,18 +323,19 @@ export default function App() {
                         {task.description}
                       </p>
 
-                      <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
-                        <p className="text-xs text-slate-600">
+                      <div className="mt-4 space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
+                        <p>
                           <span className="font-semibold">Owner:</span>{' '}
                           {task.assignee}
                         </p>
-
-                        <p className="text-xs text-slate-600">
+                        <p>
                           <span className="font-semibold">Due:</span>{' '}
-                          {task.dueDate || 'Not set'}
+                          {task.dueDate
+  ? task.dueDate.split('-').reverse().join('/')
+  : 'Not set'}
                         </p>
                       </div>
-                    </article>
+                    </button>
                   ))}
                 </div>
               </section>
@@ -296,6 +343,187 @@ export default function App() {
           })}
         </main>
       </div>
+
+      {form !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="task-modal-title"
+            className="my-auto w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <div className="mb-5 flex items-center justify-between">
+              <h2
+                id="task-modal-title"
+                className="text-xl font-bold text-slate-900"
+              >
+                {editingId ? 'Edit Task' : 'New Task'}
+              </h2>
+
+              <button
+                type="button"
+                onClick={closeModal}
+                aria-label="Close task form"
+                className="rounded-md px-2 py-1 text-xl text-slate-600 hover:bg-slate-100"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={saveTask} className="space-y-4">
+              <div>
+                <label htmlFor="task-title" className="mb-1 block text-sm font-semibold">
+                  Task title *
+                </label>
+                <input
+                  id="task-title"
+                  required
+                  maxLength={100}
+                  value={form.title}
+                  onChange={(event) => updateForm('title', event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-violet-700"
+                  placeholder="e.g. Fix navigation bug"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="task-description" className="mb-1 block text-sm font-semibold">
+                  Description
+                </label>
+                <textarea
+                  id="task-description"
+                  rows={3}
+                  value={form.description}
+                  onChange={(event) => updateForm('description', event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-violet-700"
+                  placeholder="Describe the work needed"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="task-type" className="mb-1 block text-sm font-semibold">
+                    Task type
+                  </label>
+                  <select
+                    id="task-type"
+                    value={form.type}
+                    onChange={(event) => updateForm('type', event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                  >
+                    <option value="feature">Feature</option>
+                    <option value="bug">Bug</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="task-status" className="mb-1 block text-sm font-semibold">
+                    Stage
+                  </label>
+                  <select
+                    id="task-status"
+                    value={form.status}
+                    onChange={(event) => updateForm('status', event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                  >
+                    {STAGES.map((stage) => (
+                      <option key={stage.id} value={stage.id}>
+                        {stage.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="task-assignee" className="mb-1 block text-sm font-semibold">
+                    Assigned to
+                  </label>
+                  <select
+                    id="task-assignee"
+                    value={form.assignee}
+                    onChange={(event) => updateForm('assignee', event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                  >
+                    {TEAM.map((member) => (
+                      <option key={member} value={member}>
+                        {member}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="task-due" className="mb-1 block text-sm font-semibold">
+                    Due date
+                  </label>
+                  <input
+                    id="task-due"
+                    type="date"
+                    value={form.dueDate}
+                    onChange={(event) => updateForm('dueDate', event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              {deleteRequested && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-rose-200 bg-rose-50 p-3"
+                >
+                  <p className="mb-3 text-sm text-rose-900">
+                    Delete this task permanently?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={deleteTask}
+                    className="rounded-lg bg-rose-700 px-3 py-2 text-sm font-semibold text-white"
+                  >
+                    Yes, delete task
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteRequested(false)}
+                    className="ml-3 text-sm font-semibold text-slate-700"
+                  >
+                    Keep task
+                  </button>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+                <div>
+                  {editingId !== null && !deleteRequested && (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteRequested(true)}
+                      className="text-sm font-semibold text-rose-700 hover:underline"
+                    >
+                      Delete task
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-[#6C5CE7] px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800"
+                  >
+                    {editingId ? 'Save Changes' : 'Create Task'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
