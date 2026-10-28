@@ -38,6 +38,7 @@ const initialTasks = [
     description: 'Decide how the board should look',
     type: 'feature',
     status: 'todo',
+    priority: 'high',
     assignee: 'Teammate A',
     dueDate: null,
     createdDate: '2026-10-20',
@@ -48,6 +49,7 @@ const initialTasks = [
     description: 'Display tasks on the board',
     type: 'feature',
     status: 'in-progress',
+    priority: 'medium',
     assignee: 'Teammate B',
     dueDate: null,
     createdDate: '2026-10-20',
@@ -58,6 +60,7 @@ const initialTasks = [
     description: 'Review colours and layout',
     type: 'bug',
     status: 'review',
+    priority: 'low',
     assignee: 'Teammate C',
     dueDate: null,
     createdDate: '2026-10-20',
@@ -68,6 +71,7 @@ const initialTasks = [
     description: 'Install dependencies and run the app',
     type: 'feature',
     status: 'done',
+    priority: 'high',
     assignee: 'Teammate A',
     dueDate: null,
     createdDate: '2026-10-20',
@@ -79,6 +83,7 @@ const emptyTask = {
   description: '',
   type: 'feature',
   status: 'todo',
+  priority: 'medium',
   assignee: TEAM[0],
   dueDate: '',
 };
@@ -89,6 +94,48 @@ const stageColours = {
   review: 'bg-amber-50 border-amber-200',
   done: 'bg-emerald-50 border-emerald-200',
 };
+
+function getDeadlineStatus(task) {
+  if (!task.dueDate || task.status === 'done') {
+    return null;
+  }
+
+  const today = new Date();
+  const todayString = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-');
+
+  if (task.dueDate < todayString) {
+    return {
+      label: 'Overdue',
+      style: 'bg-rose-100 text-rose-800',
+    };
+  }
+
+  if (task.dueDate === todayString) {
+    return {
+      label: 'Due today',
+      style: 'bg-amber-100 text-amber-900',
+    };
+  }
+
+  const due = new Date(`${task.dueDate}T12:00:00`);
+  const now = new Date(`${todayString}T12:00:00`);
+  const daysUntilDue = Math.round(
+    (due - now) / (1000 * 60 * 60 * 24)
+  );
+
+  if (daysUntilDue <= 3) {
+    return {
+      label: 'Due soon',
+      style: 'bg-amber-100 text-amber-900',
+    };
+  }
+
+  return null;
+}
 
 export default function App() {
   const [tasks, setTasks] = useLocalStorage(
@@ -126,6 +173,7 @@ export default function App() {
       description: task.description,
       type: task.type,
       status: task.status,
+      priority: task.priority || 'medium',
       assignee: task.assignee,
       dueDate: task.dueDate || '',
     });
@@ -154,12 +202,12 @@ export default function App() {
         current.map((task) =>
           task.id === editingId
             ? {
-                ...task,
-                ...form,
-                title,
-                description: form.description.trim(),
-                dueDate: form.dueDate || null,
-              }
+              ...task,
+              ...form,
+              title,
+              description: form.description.trim(),
+              dueDate: form.dueDate || null,
+            }
             : task
         )
       );
@@ -306,13 +354,24 @@ export default function App() {
                       className="block w-full rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
                     >
                       <span
-                        className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${
-                          task.type === 'bug'
+                        className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${task.type === 'bug'
                             ? 'bg-rose-100 text-rose-800'
                             : 'bg-violet-100 text-violet-800'
-                        }`}
+                          }`}
                       >
                         {task.type === 'bug' ? 'Bug' : 'Feature'}
+                      </span>
+
+                      <span
+                        className={`ml-2 inline-block rounded-md px-2 py-1 text-xs font-semibold ${(task.priority || 'medium') === 'high'
+                            ? 'bg-rose-100 text-rose-800'
+                            : (task.priority || 'medium') === 'medium'
+                              ? 'bg-amber-100 text-amber-900'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}
+                      >
+                        {(task.priority || 'medium').charAt(0).toUpperCase() +
+                          (task.priority || 'medium').slice(1)} priority
                       </span>
 
                       <h3 className="mt-3 text-sm font-semibold leading-5">
@@ -331,9 +390,20 @@ export default function App() {
                         <p>
                           <span className="font-semibold">Due:</span>{' '}
                           {task.dueDate
-  ? task.dueDate.split('-').reverse().join('/')
-  : 'Not set'}
+                            ? task.dueDate.split('-').reverse().join('/')
+                            : 'Not set'}
                         </p>
+
+                        {getDeadlineStatus(task) && (
+                          <p>
+                            <span
+                              className={`inline-block rounded-md px-2 py-1 font-semibold ${getDeadlineStatus(task).style
+                                }`}
+                            >
+                              {getDeadlineStatus(task).label}
+                            </span>
+                          </p>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -413,6 +483,27 @@ export default function App() {
                   >
                     <option value="feature">Feature</option>
                     <option value="bug">Bug</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="task-priority"
+                    className="mb-1 block text-sm font-semibold"
+                  >
+                    Priority
+                  </label>
+                  <select
+                    id="task-priority"
+                    value={form.priority}
+                    onChange={(event) =>
+                      updateForm('priority', event.target.value)
+                    }
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                   </select>
                 </div>
 
