@@ -8,7 +8,22 @@ export const STAGES = [
   { id: 'done', label: 'Done' },
 ];
 
-export const TEAM = ['Teammate A', 'Teammate B', 'Teammate C'];
+export const TEAM = [
+  'Paige Harrison',
+  'Eeman Haq',
+  'Safa Mustafa',
+  'Elena Petrova',
+  'Logan Brooks',
+  'Cole Miller',
+];
+const TEAM_ROLES = [
+  'Team Lead',
+  'Frontend Developer',
+  'Backend Developer',
+  'UI/UX Designer',
+  'Software Developer',
+];
+const DEFAULT_ROLE = 'Software Developer';
 
 export function useLocalStorage(key, initialValue) {
   const [value, setValue] = useState(() => {
@@ -31,50 +46,111 @@ export function useLocalStorage(key, initialValue) {
   return [value, setValue];
 }
 
+const INITIAL_DELIVERABLES = [
+  {
+    id: 'deliverable-1',
+    title: 'Requirements and Planning',
+    description: 'Agree on scope, requirements and priorities.',
+    completed: false,
+  },
+  {
+    id: 'deliverable-2',
+    title: 'Core Implementation',
+    description: 'Build the main application functionality.',
+    completed: false,
+  },
+  {
+    id: 'deliverable-3',
+    title: 'Testing and Review',
+    description: 'Check functionality, accessibility and usability.',
+    completed: false,
+  },
+];
+
 const initialTasks = [
   {
     id: '1',
-    title: 'Plan the project layout',
-    description: 'Decide how the board should look',
+    title: 'Review Kanban board layout',
+    description: 'Check task-card readability and responsive layout.',
     type: 'feature',
     status: 'todo',
-    priority: 'high',
-    assignee: 'Teammate A',
-    dueDate: null,
+    assignee: 'Logan Brooks',
+    dueDate: '2026-10-31',
     createdDate: '2026-10-20',
+    priority: 'high',
+    aiContext: '',
   },
   {
     id: '2',
-    title: 'Create task cards',
-    description: 'Display tasks on the board',
+    title: 'Set up the React development environment',
+    description: 'Install dependencies and confirm that the application runs locally.',
     type: 'feature',
-    status: 'in-progress',
-    priority: 'medium',
-    assignee: 'Teammate B',
+    status: 'done',
+    assignee: 'Cole Miller',
     dueDate: null,
     createdDate: '2026-10-20',
+    priority: 'high',
+    aiContext: '',
   },
   {
     id: '3',
-    title: 'Check the design',
-    description: 'Review colours and layout',
-    type: 'bug',
+    title: 'Review task management functionality',
+    description: 'Check that task creation, editing, deletion, filtering and stage updates work as expected.',
+    type: 'feature',
     status: 'review',
-    priority: 'low',
-    assignee: 'Teammate C',
-    dueDate: null,
+    assignee: 'Eeman Haq',
+    dueDate: '2026-10-29',
     createdDate: '2026-10-20',
+    priority: 'low',
+    aiContext: '',
   },
   {
     id: '4',
-    title: 'Set up React project',
-    description: 'Install dependencies and run the app',
+    title: 'Test core prototype features',
+    description: 'Verify that the task forms, filters and team directory work correctly. Resolve issues identified during testing.',
     type: 'feature',
     status: 'done',
-    priority: 'high',
-    assignee: 'Teammate A',
-    dueDate: null,
+    assignee: 'Logan Brooks',
+    dueDate: '2026-10-27',
     createdDate: '2026-10-20',
+    priority: 'medium',
+    aiContext: '',
+  },
+  {
+    id: 'b4e85432-32f3-4241-83f2-7e4a8fcf2c36',
+    title: 'Review visual design and accessibility',
+    description: 'Check colours, keyboard focus and 200% zoom.',
+    type: 'feature',
+    status: 'review',
+    assignee: 'Paige Harrison',
+    dueDate: '2026-11-05',
+    createdDate: '2026-10-28',
+    priority: 'high',
+    aiContext: '',
+  },
+  {
+    id: '2651dd45-8a7c-4261-a77d-fd85300bed22',
+    title: 'Deadline warning not updating',
+    description: 'Overdue badge does not refresh until the page is reloaded.',
+    type: 'bug',
+    status: 'in-progress',
+    assignee: 'Elena Petrova',
+    dueDate: '2026-10-30',
+    createdDate: '2026-10-28',
+    priority: 'high',
+    aiContext: '',
+  },
+  {
+    id: '41ae1944-451e-4a61-a13d-0507a3532934',
+    title: 'Validate team member management',
+    description: 'Test adding, editing and removing team members.',
+    type: 'feature',
+    status: 'todo',
+    assignee: 'Safa Mustafa',
+    dueDate: '2026-11-15',
+    createdDate: '2026-10-28',
+    priority: 'medium',
+    aiContext: '',
   },
 ];
 
@@ -90,10 +166,10 @@ const emptyTask = {
 };
 
 const stageColours = {
-  todo: 'bg-slate-100 border-slate-200',
-  'in-progress': 'bg-violet-50 border-violet-200',
-  review: 'bg-amber-50 border-amber-200',
-  done: 'bg-emerald-50 border-emerald-200',
+  todo: 'bg-[#F2EAF2] border-[#E4D7E4]',
+  'in-progress': 'bg-[#EDF1F5] border-[#DDE5ED]',
+  review: 'bg-[#F1EDFA] border-[#E1D9F2]',
+  done: 'bg-[#E8F7EE] border-[#CCE9D8]',
 };
 
 function getDeadlineStatus(task) {
@@ -111,14 +187,14 @@ function getDeadlineStatus(task) {
   if (task.dueDate < todayString) {
     return {
       label: 'Overdue',
-      style: 'bg-rose-100 text-rose-800',
+      style: 'bg-red-100 text-red-800',
     };
   }
 
   if (task.dueDate === todayString) {
     return {
       label: 'Due today',
-      style: 'bg-amber-100 text-amber-900',
+      style: 'bg-[#F5D4BD] text-[#80340F]',
     };
   }
 
@@ -131,7 +207,7 @@ function getDeadlineStatus(task) {
   if (daysUntilDue <= 3) {
     return {
       label: 'Due soon',
-      style: 'bg-amber-100 text-amber-900',
+      style: 'bg-[#F8E8AC] text-[#68500D]',
     };
   }
 
@@ -145,7 +221,26 @@ export default function App() {
   );
 
   const [activePage, setActivePage] = useState('board');
-  const [teamMembers, setTeamMembers] = useLocalStorage('vibetracker.team', TEAM);
+  const [deliverables, setDeliverables] = useLocalStorage(
+  'vibetracker.deliverables',
+  INITIAL_DELIVERABLES
+);
+const [teamMembers, setTeamMembers] = useLocalStorage('vibetracker.team', TEAM);
+
+const [memberRoles, setMemberRoles] = useLocalStorage(
+  'vibetracker.memberRoles',
+  {
+    'Cole Miller': 'Team Lead',
+    'Eeman Haq': 'Software Architect',
+    'Elena Petrova': 'Frontend Developer',
+    'Logan Brooks': 'UI Designer',
+    'Safa Mustafa': 'Backend Developer',
+    'Paige Harrison': 'Software Developer',
+  }
+);
+
+const [newMemberRole, setNewMemberRole] = useState(DEFAULT_ROLE);
+const [editedMemberRole, setEditedMemberRole] = useState(DEFAULT_ROLE);
   const [newMemberName, setNewMemberName] = useState('');
   const [editingMember, setEditingMember] = useState(null);
   const [editedMemberName, setEditedMemberName] = useState('');
@@ -281,6 +376,18 @@ function renameTeamMember(event) {
     setAssigneeFilter(newName);
   }
 
+  setMemberRoles((current) => {
+  const updated = { ...current };
+
+  if (editingMember !== newName) {
+    delete updated[editingMember];
+  }
+
+  updated[newName] = editedMemberRole;
+
+  return updated;
+});
+
   setEditingMember(null);
   setEditedMemberName('');
 }
@@ -318,6 +425,11 @@ function confirmRemoveTeamMember() {
   setTeamMembers((current) =>
     current.filter((member) => member !== memberToRemove)
   );
+  setMemberRoles((current) => {
+  const updated = { ...current };
+  delete updated[memberToRemove];
+  return updated;
+});
 
   if (editingMember === memberToRemove) {
     setEditingMember(null);
@@ -339,8 +451,15 @@ function addTeamMember(event) {
     return;
   }
 
-  setTeamMembers((current) => [...current, name]);
-  setNewMemberName('');
+setTeamMembers((current) => [...current, name]);
+
+setMemberRoles((current) => ({
+  ...current,
+  [name]: newMemberRole,
+}));
+
+setNewMemberName('');
+setNewMemberRole(DEFAULT_ROLE);
 }
 
   function openNewTask(status = 'todo') {
@@ -477,13 +596,13 @@ async function copyAiPrompt(task) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F6F8] text-slate-900 lg:flex">
-      <aside className="bg-[#1E2433] px-6 py-8 text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col">
+    <div className="min-h-screen bg-[#F8F9F7] text-[#172333] lg:flex">
+      <aside className="bg-[#173D32] px-6 py-8 text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col">
         <div className="mb-8">
           <p className="text-lg font-bold tracking-tight">
             Project Workspace
           </p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-sm text-emerald-100">
             Software team tracker
           </p>
         </div>
@@ -493,9 +612,9 @@ async function copyAiPrompt(task) {
     type="button"
     onClick={() => setActivePage('board')}
     aria-current={activePage === 'board' ? 'page' : undefined}
-    className={`w-full rounded-lg px-4 py-3 text-left text-sm font-semibold ${
+className={`w-full rounded-lg px-4 py-3 text-left text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
       activePage === 'board'
-        ? 'bg-[#6C5CE7] text-white'
+        ? 'bg-[#286B56] text-white'
         : 'text-slate-300 hover:bg-slate-700'
     }`}
   >
@@ -506,9 +625,9 @@ async function copyAiPrompt(task) {
     type="button"
     onClick={() => setActivePage('team')}
     aria-current={activePage === 'team' ? 'page' : undefined}
-    className={`w-full rounded-lg px-4 py-3 text-left text-sm font-semibold ${
+    className={`w-full rounded-lg px-4 py-3 text-left text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
       activePage === 'team'
-        ? 'bg-[#6C5CE7] text-white'
+        ? 'bg-[#286B56] text-white'
         : 'text-slate-300 hover:bg-slate-700'
     }`}
   >
@@ -524,9 +643,8 @@ async function copyAiPrompt(task) {
   <p className="text-sm font-semibold text-slate-200">
     Project Tracker
   </p>
-  <p className="mt-1 text-xs text-slate-400">
-    Interactive prototype · Version 1
-  </p>
+  <p className="mt-1 text-sm text-emerald-100">
+Plan. Track. Deliver.  </p>
 </div>
       </aside>
 
@@ -534,9 +652,9 @@ async function copyAiPrompt(task) {
 
           {activePage === 'board' ? (
           <>
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
+       <header className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-700">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#216447]">
               Team workspace / Board
             </p>
             <h1 className="text-3xl font-bold tracking-tight">
@@ -550,7 +668,7 @@ async function copyAiPrompt(task) {
           <button
             type="button"
             onClick={() => openNewTask()}
-            className="rounded-lg bg-[#6C5CE7] px-5 py-3 text-sm font-semibold text-white hover:bg-violet-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
+            className="rounded-lg bg-[#286447] px-5 py-3 text-sm font-semibold text-white hover:bg-[#174D37] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
           >
             + New Task
           </button>
@@ -560,7 +678,7 @@ async function copyAiPrompt(task) {
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {[
               { label: 'Total tasks', value: tasks.length, colour: 'text-slate-900' },
-              { label: 'In progress', value: inProgressTasks, colour: 'text-violet-700' },
+              { label: 'In progress', value: inProgressTasks, colour: 'text-[#216447]' },
               { label: 'In review', value: reviewTasks, colour: 'text-amber-700' },
               { label: 'Completed', value: completedTasks, colour: 'text-emerald-700' },
             ].map((stat) => (
@@ -578,11 +696,11 @@ async function copyAiPrompt(task) {
         </section>
 <section
   aria-label="Project insights"
-  className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2"
+  className="mb-4"
 >
   <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <h2 className="text-base font-bold">Project progress</h2>
-    <p className="mt-2 text-3xl font-bold text-violet-700">
+    <p className="mt-2 text-3xl font-bold text-[#216447]">
       {completionPercentage}%
     </p>
     <p className="mt-1 text-sm text-slate-600">
@@ -598,7 +716,7 @@ async function copyAiPrompt(task) {
       className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200"
     >
       <div
-        className="h-full rounded-full bg-[#6C5CE7]"
+        className="h-full rounded-full bg-[#286447]"
         style={{ width: `${completionPercentage}%` }}
       />
     </div>
@@ -611,33 +729,10 @@ async function copyAiPrompt(task) {
     </p>
   </div>
 
-  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-    <h2 className="text-base font-bold">Team workload</h2>
-    <p className="mt-1 text-sm text-slate-600">
-      Tasks still in progress across the team
-    </p>
-
-    <div className="mt-4 space-y-3">
-      {teamWorkload.map((member) => (
-        <div
-          key={member.name}
-          className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3"
-        >
-          <span className="text-sm font-medium">
-            {member.name}
-          </span>
-          <span className="text-sm font-semibold text-violet-700">
-            {member.count}{' '}
-            {member.count === 1 ? 'task' : 'tasks'}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
 </section>
 <section
   aria-label="Search and filter tasks"
-  className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+  className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
 >
   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
     <div>
@@ -653,7 +748,7 @@ async function copyAiPrompt(task) {
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Search title or description"
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
+        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
       />
     </div>
 
@@ -668,7 +763,7 @@ async function copyAiPrompt(task) {
         id="assignee-filter"
         value={assigneeFilter}
         onChange={(event) => setAssigneeFilter(event.target.value)}
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
       >
         <option value="all">All team members</option>
         {teamMembers.map((member) => (
@@ -690,7 +785,7 @@ async function copyAiPrompt(task) {
         id="priority-filter"
         value={priorityFilter}
         onChange={(event) => setPriorityFilter(event.target.value)}
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
       >
         <option value="all">All priorities</option>
         <option value="high">High</option>
@@ -709,12 +804,78 @@ async function copyAiPrompt(task) {
       <button
         type="button"
         onClick={clearFilters}
-        className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-violet-700"
+        className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-[#216447]"
       >
         Clear filters
       </button>
     )}
   </div>
+</section>
+
+<section
+  id="project-deliverables"
+  aria-labelledby="deliverables-heading"
+  className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+>
+  <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-widest text-[#216447]">
+        Project milestones
+      </p>
+      <h2 id="deliverables-heading" className="mt-1 text-lg font-bold">
+        Deliverables Anchor Board
+      </h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Keep the project's main outcomes visible above the task board.
+      </p>
+    </div>
+
+    <span className="rounded-full bg-[#E6F3EB] px-3 py-1 text-sm font-semibold text-[#174D37]">
+      {deliverables.filter((item) => item.completed).length} of {deliverables.length} complete
+    </span>
+  </div>
+
+<details className="group">
+  <summary className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-[#174D37] hover:bg-[#F0F7F3] focus-visible:outline-2 focus-visible:outline-[#216447]">
+    <span className="group-open:hidden">Show deliverables ▼</span>
+    <span className="hidden group-open:inline">Hide deliverables ▲</span>
+  </summary>
+  <div className="mt-4 grid gap-3 md:grid-cols-3">
+    {deliverables.map((deliverable) => (
+      <label
+        key={deliverable.id}
+        className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 hover:border-violet-300"
+      >
+        <input
+          type="checkbox"
+          checked={deliverable.completed}
+          onChange={(event) => {
+            setDeliverables((current) =>
+              current.map((item) =>
+                item.id === deliverable.id
+                  ? { ...item, completed: event.target.checked }
+                  : item
+              )
+            );
+          }}
+          className="mt-1 h-4 w-4 accent-[#216447]"
+        />
+
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-slate-900">
+            {deliverable.title}
+          </span>
+          <span className="mt-1 block text-xs leading-5 text-slate-600">
+            {deliverable.description}
+          </span>
+          <span className="mt-2 block text-xs font-semibold text-[#174D37]">
+            {deliverable.completed ? 'Completed' : 'Not completed'}
+          </span>
+        </span>
+      </label>
+    ))}
+  </div>
+</details>
 </section>
 
         <main
@@ -730,7 +891,7 @@ async function copyAiPrompt(task) {
               <section
                 key={stage.id}
                 aria-label={`${stage.label} tasks`}
-                className={`min-h-80 rounded-xl border p-4 ${stageColours[stage.id]}`}
+                className={`min-h-80 rounded-xl border p-3 ${stageColours[stage.id]}`}
               >
                 <div className="mb-4 flex items-center justify-between gap-2">
                   <h2 className="text-sm font-bold">
@@ -745,7 +906,7 @@ async function copyAiPrompt(task) {
                       type="button"
                       onClick={() => openNewTask(stage.id)}
                       aria-label={`Add task to ${stage.label}`}
-                      className="rounded-md bg-white px-2 py-1 text-sm font-bold text-violet-700 hover:bg-violet-100 focus-visible:outline-2 focus-visible:outline-violet-700"
+                      className="rounded-md bg-white px-2 py-1 text-sm font-bold text-[#216447] hover:bg-[#E6F3EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
                     >
                       +
                     </button>
@@ -767,12 +928,13 @@ async function copyAiPrompt(task) {
                       type="button"
                       onClick={() => openEditTask(task)}
                       aria-label={`Edit task: ${task.title}`}
-                      className="block w-full rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
+                      className="block w-full rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-[#286B56] hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
+                      
                     >
                       <span
                         className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${task.type === 'bug'
                             ? 'bg-rose-100 text-rose-800'
-                            : 'bg-violet-100 text-violet-800'
+                            : 'bg-[#E6F3EB] text-[#174D37]'
                           }`}
                       >
                         {task.type === 'bug' ? 'Bug' : 'Feature'}
@@ -833,7 +995,7 @@ async function copyAiPrompt(task) {
 
 <section aria-label="Team workspace" className="space-y-8">
   <header className="border-b border-slate-200 pb-6">
-    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-700">
+    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#216447]">
       Project Workspace / Team
     </p>
     <h1 className="text-3xl font-bold tracking-tight">
@@ -892,7 +1054,7 @@ async function copyAiPrompt(task) {
 
             <div className="h-2 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-[#6C5CE7]"
+                className="h-full rounded-full bg-[#286447]"
                 style={{
                   width: `${(member.count / maximum) * 100}%`,
                 }}
@@ -1007,12 +1169,31 @@ async function copyAiPrompt(task) {
     placeholder="Enter team member name"
     maxLength={60}
     required
-    className="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-violet-700"
+    className="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-[#216447]"
   />
+
+<div className="sm:w-48">
+  <label htmlFor="new-member-role" className="sr-only">
+    New team member role
+  </label>
+
+  <select
+    id="new-member-role"
+    value={newMemberRole}
+    onChange={(event) => setNewMemberRole(event.target.value)}
+    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-[#216447]"
+  >
+    {TEAM_ROLES.map((role) => (
+      <option key={role} value={role}>
+        {role}
+      </option>
+    ))}
+  </select>
+</div>
 
   <button
     type="submit"
-    className="rounded-lg bg-[#6C5CE7] px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
+    className="rounded-lg bg-[#286447] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#174D37] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
   >
     + Add Member
   </button>
@@ -1024,15 +1205,15 @@ async function copyAiPrompt(task) {
           key={member.name}
           className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
         >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#1E2433] text-sm font-bold text-white">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#302824] text-sm font-bold text-white">
             {String(index + 1).padStart(2, '0')}
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="font-semibold">{member.name}</p>
-            <p className="text-sm text-slate-600">
-              Team member
-            </p>
+<p className="font-semibold">{member.name}</p>
+<p className="text-sm text-slate-600">
+  {memberRoles[member.name] || DEFAULT_ROLE}
+</p>
           </div>
 
           <div className="text-right">
@@ -1042,11 +1223,12 @@ async function copyAiPrompt(task) {
 
           <button
   type="button"
-  onClick={() => {
-    setEditingMember(member.name);
-    setEditedMemberName(member.name);
-  }}
-  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-violet-700"
+onClick={() => {
+  setEditingMember(member.name);
+  setEditedMemberName(member.name);
+  setEditedMemberRole(memberRoles[member.name] || DEFAULT_ROLE);
+}}
+  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-[#216447]"
   aria-label={`Edit ${member.name}`}
 >
   Edit
@@ -1066,7 +1248,7 @@ async function copyAiPrompt(task) {
     {editingMember !== null && (
   <form
     onSubmit={renameTeamMember}
-    className="mt-4 rounded-xl border border-violet-200 bg-white p-5 shadow-sm"
+    className="mt-4 rounded-xl border border-[#CCE9D8] bg-white p-5 shadow-sm"
   >
     <h3 className="mb-3 font-bold">
       Edit {editingMember}
@@ -1086,13 +1268,33 @@ async function copyAiPrompt(task) {
       maxLength={60}
       value={editedMemberName}
       onChange={(event) => setEditedMemberName(event.target.value)}
-      className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-violet-700"
+      className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-[#216447]"
     />
+
+    <label
+  htmlFor="edit-member-role"
+  className="mb-2 mt-4 block text-sm font-semibold"
+>
+  Team role
+</label>
+
+<select
+  id="edit-member-role"
+  value={editedMemberRole}
+  onChange={(event) => setEditedMemberRole(event.target.value)}
+  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-[#216447]"
+>
+  {TEAM_ROLES.map((role) => (
+    <option key={role} value={role}>
+      {role}
+    </option>
+  ))}
+</select>
 
     <div className="mt-4 flex gap-3">
       <button
         type="submit"
-        className="rounded-lg bg-[#6C5CE7] px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800"
+        className="rounded-lg bg-[#286447] px-4 py-2 text-sm font-semibold text-white hover:bg-[#174D37]"
       >
         Save changes
       </button>
@@ -1153,7 +1355,7 @@ async function copyAiPrompt(task) {
                   maxLength={100}
                   value={form.title}
                   onChange={(event) => updateForm('title', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-violet-700"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-[#216447]"
                   placeholder="e.g. Fix navigation bug"
                 />
               </div>
@@ -1167,7 +1369,7 @@ async function copyAiPrompt(task) {
                   rows={3}
                   value={form.description}
                   onChange={(event) => updateForm('description', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-violet-700"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-[#216447]"
                   placeholder="Describe the work needed"
                 />
               </div>
@@ -1278,7 +1480,7 @@ async function copyAiPrompt(task) {
       updateForm('aiContext', event.target.value)
     }
     placeholder="e.g. Check Login.jsx, keep the existing design, and include validation."
-    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-violet-700"
+    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-[#216447]"
   />
 </div>  
 {editingId !== null && (
@@ -1294,7 +1496,7 @@ if (task) {
   copyAiPrompt({ ...task, ...form });
 }
       }}
-      className="rounded-lg border border-violet-300 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 hover:bg-violet-100"
+      className="rounded-lg border border-violet-300 bg-[#F0F7F3] px-4 py-2 text-sm font-semibold text-[#174D37] hover:bg-[#E6F3EB]"
     >
       Copy AI Prompt
     </button>
@@ -1360,7 +1562,7 @@ if (task) {
                   </button>
                   <button
                     type="submit"
-                    className="rounded-lg bg-[#6C5CE7] px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800"
+                    className="rounded-lg bg-[#286447] px-4 py-2 text-sm font-semibold text-white hover:bg-[#174D37]"
                   >
                     {editingId ? 'Save Changes' : 'Create Task'}
                   </button>
