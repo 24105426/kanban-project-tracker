@@ -86,6 +86,7 @@ const emptyTask = {
   priority: 'medium',
   assignee: TEAM[0],
   dueDate: '',
+  aiContext: '',
 };
 
 const stageColours = {
@@ -150,6 +151,8 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [copiedTaskId, setCopiedTaskId] = useState(null);
+  const [copyErrorTaskId, setCopyErrorTaskId] = useState(null);
 
   const completedTasks = tasks.filter(
     (task) => task.status === 'done'
@@ -234,6 +237,7 @@ function clearFilters() {
       priority: task.priority || 'medium',
       assignee: task.assignee,
       dueDate: task.dueDate || '',
+      aiContext: task.aiContext || '',
     });
     setDeleteRequested(false);
   }
@@ -284,6 +288,33 @@ function clearFilters() {
 
     closeModal();
   }
+async function copyAiPrompt(task) {
+  const stage = STAGES.find((item) => item.id === task.status);
+
+  const prompt = [
+    'Help me with this software development task.',
+    '',
+    `Task: ${task.title}`,
+    `Description: ${task.description || 'Not provided'}`,
+    `Type: ${task.type}`,
+    `Priority: ${task.priority || 'medium'}`,
+    `Stage: ${stage?.label || task.status}`,
+    `Assigned to: ${task.assignee}`,
+    `Due date: ${task.dueDate || 'Not set'}`,
+    '',
+    'Additional context:',
+    task.aiContext || 'No additional context provided.',
+    '',
+    'Please explain the steps clearly and suggest a practical solution.',
+  ].join('\n');
+
+  try {
+    await navigator.clipboard.writeText(prompt);
+    setCopiedTaskId(task.id);
+  } catch {
+    setCopyErrorTaskId(task.id);
+  }
+}
 
   function deleteTask() {
     setTasks((current) =>
@@ -756,7 +787,59 @@ function clearFilters() {
                   />
                 </div>
               </div>
+<div>
+  <label
+    htmlFor="task-ai-context"
+    className="mb-1 block text-sm font-semibold"
+  >
+    AI prompt context
+  </label>
 
+  <p className="mb-2 text-xs text-slate-600">
+    Add technical details or instructions for an AI coding assistant.
+  </p>
+
+  <textarea
+    id="task-ai-context"
+    rows={3}
+    value={form.aiContext || ''}
+    onChange={(event) =>
+      updateForm('aiContext', event.target.value)
+    }
+    placeholder="e.g. Check Login.jsx, keep the existing design, and include validation."
+    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus-visible:outline-2 focus-visible:outline-violet-700"
+  />
+</div>  
+{editingId !== null && (
+  <div>
+    <button
+      type="button"
+      onClick={() => {
+        const task = tasks.find((item) => item.id === editingId);
+        if (task) {
+          setCopiedTaskId(null);
+          setCopyErrorTaskId(null);
+          copyAiPrompt(task);
+        }
+      }}
+      className="rounded-lg border border-violet-300 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 hover:bg-violet-100"
+    >
+      Copy AI Prompt
+    </button>
+
+    {copiedTaskId === editingId && (
+      <p role="status" className="mt-2 text-sm text-emerald-700">
+        Prompt copied!
+      </p>
+    )}
+
+    {copyErrorTaskId === editingId && (
+      <p role="alert" className="mt-2 text-sm text-rose-700">
+        Couldn't copy the prompt. Please try again.
+      </p>
+    )}
+  </div>
+)}
               {deleteRequested && (
                 <div
                   role="alert"
