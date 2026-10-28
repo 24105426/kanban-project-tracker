@@ -478,7 +478,7 @@ async function copyAiPrompt(task) {
 
   return (
     <div className="min-h-screen bg-[#F5F6F8] text-slate-900 lg:flex">
-      <aside className="bg-[#1E2433] px-6 py-6 text-white lg:min-h-screen lg:w-60 lg:shrink-0">
+      <aside className="bg-[#1E2433] px-6 py-8 text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col">
         <div className="mb-8">
           <p className="text-lg font-bold tracking-tight">
             Project Workspace
@@ -515,10 +515,19 @@ async function copyAiPrompt(task) {
     Team
   </button>
 
-  <p className="mt-4 px-4 text-xs leading-5 text-slate-400">
-    Manage your team's project tasks.
+  <p className="mt-6 border-t border-slate-700 px-4 pt-6 text-sm leading-6 text-slate-300">
+    Manage tasks, track progress and collaborate with your team.
   </p>
 </nav>
+
+<div className="mt-auto border-t border-slate-700 pt-6">
+  <p className="text-sm font-semibold text-slate-200">
+    Project Tracker
+  </p>
+  <p className="mt-1 text-xs text-slate-400">
+    Interactive prototype · Version 1
+  </p>
+</div>
       </aside>
 
       <div className="min-w-0 flex-1 px-4 py-7 sm:px-6 lg:px-8">
