@@ -18,9 +18,10 @@ export const TEAM = [
 ];
 const TEAM_ROLES = [
   'Team Lead',
+  'Software Architect',
   'Frontend Developer',
   'Backend Developer',
-  'UI/UX Designer',
+  'UI Designer',
   'Software Developer',
 ];
 const DEFAULT_ROLE = 'Software Developer';
@@ -215,6 +216,42 @@ function getDeadlineStatus(task) {
 }
 
 export default function App() {
+    const [recentlyDeletedTask, setRecentlyDeletedTask] = useState(null);
+    useEffect(() => {
+  if (!recentlyDeletedTask) return;
+
+  const timer = setTimeout(() => {
+    setRecentlyDeletedTask(null);
+  }, 10000);
+
+  return () => clearTimeout(timer);
+}, [recentlyDeletedTask]);
+    const [isLoggedIn, setIsLoggedIn] = useState(
+    () => sessionStorage.getItem('projectTracker.demoLogin') === 'true'
+  );
+
+  const [loginName, setLoginName] = useState('Cole');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  function signIn(event) {
+    event.preventDefault();
+
+    if (!loginName.trim() || !loginPassword.trim()) {
+      setLoginError('Please enter your name and password.');
+      return;
+    }
+
+    sessionStorage.setItem('projectTracker.demoLogin', 'true');
+    setIsLoggedIn(true);
+    setLoginError('');
+  }
+
+  function signOut() {
+    sessionStorage.removeItem('projectTracker.demoLogin');
+    setIsLoggedIn(false);
+    setLoginPassword('');
+  }
   const [tasks, setTasks] = useLocalStorage(
     'vibetracker.tasks',
     initialTasks
@@ -588,11 +625,166 @@ async function copyAiPrompt(task) {
   }
 }
 
-  function deleteTask() {
-    setTasks((current) =>
-      current.filter((task) => task.id !== editingId)
+function exportTasksToCsv() {
+  const columns = [
+    ["Task", "title"],
+    ["Description", "description"],
+    ["Status", "status"],
+    ["Priority", "priority"],
+    ["Assignee", "assignee"],
+    ["Due Date", "dueDate"],
+  ];
+
+  const escapeCsv = (value) =>
+    `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+  const rows = [
+    columns.map(([heading]) => escapeCsv(heading)).join(","),
+    ...tasks.map((task) =>
+      columns.map(([, key]) => escapeCsv(task[key])).join(",")
+    ),
+  ];
+
+  const blob = new Blob(
+    ["\uFEFF", rows.join("\r\n")],
+    { type: "text/csv;charset=utf-8;" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "kanban-project-tasks.csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+function deleteTask() {
+  const deletedTask = tasks.find((task) => task.id === editingId);
+
+  if (deletedTask) {
+    setRecentlyDeletedTask(deletedTask);
+  }
+
+  setTasks((current) =>
+    current.filter((task) => task.id !== editingId)
+  );
+
+  closeModal();
+}
+
+function undoDelete() {
+  if (!recentlyDeletedTask) return;
+
+  setTasks((current) => {
+    if (current.some((task) => task.id === recentlyDeletedTask.id)) {
+      return current;
+    }
+
+    return [...current, recentlyDeletedTask];
+  });
+
+  setRecentlyDeletedTask(null);
+}
+
+    if (!isLoggedIn) {
+    return (
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#102D25] px-4 py-12 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#102D25] via-[#245C49] to-[#071B16]" />
+        <div className="pointer-events-none absolute -left-24 top-16 h-80 w-80 rounded-full bg-emerald-300/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-emerald-200/10 blur-3xl" />
+
+        <div className="relative z-10 w-full max-w-md">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-4xl shadow-lg">
+              🌿
+            </div>
+
+            <h1 className="text-3xl font-bold tracking-tight">
+              Kanban Project Tracker
+            </h1>
+
+            <p className="mt-3 text-sm text-emerald-100">
+              Plan. Track. Collaborate. Deliver.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/20 bg-white p-7 text-slate-900 shadow-2xl sm:p-9">
+            <h2 className="text-center text-2xl font-bold">
+              Welcome Back
+            </h2>
+
+            <p className="mb-7 mt-2 text-center text-sm text-slate-500">
+              Sign in to your project workspace
+            </p>
+
+            <form onSubmit={signIn} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="demo-login-name"
+                  className="mb-2 block text-sm font-semibold"
+                >
+                  Your name
+                </label>
+
+                <input
+                  id="demo-login-name"
+                  type="text"
+                  value={loginName}
+                  onChange={(event) => setLoginName(event.target.value)}
+                  placeholder="Enter your name"
+                  autoComplete="name"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="demo-login-password"
+                  className="mb-2 block text-sm font-semibold"
+                >
+                  Demo password
+                </label>
+
+                <input
+                  id="demo-login-password"
+                  type="password"
+                  value={loginPassword}
+                  onChange={(event) => setLoginPassword(event.target.value)}
+                  placeholder="Enter any demo password"
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
+                />
+              </div>
+
+              {loginError && (
+                <p role="alert" className="text-sm font-medium text-rose-700">
+                  {loginError}
+                </p>
+              )}
+
+<button
+  type="submit"
+  className="w-full rounded-xl bg-[#173D32] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#286B56] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
+>
+  Sign In
+</button>
+            </form>
+
+<p className="mt-5 text-center text-xs text-slate-500">
+  Demo access · No registration required
+</p>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-emerald-100/80">
+            Software project management workspace
+          </p>
+        </div>
+      </main>
     );
-    closeModal();
   }
 
   return (
@@ -649,6 +841,29 @@ Plan. Track. Deliver.  </p>
       </aside>
 
       <div className="min-w-0 flex-1 px-4 py-7 sm:px-6 lg:px-8">
+
+                <div className="mb-5 flex justify-end">
+          <details className="relative">
+            <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#173D32] shadow-sm hover:bg-[#F0F7F3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E6F3EB] font-bold">
+                {loginName.trim().charAt(0).toUpperCase() || 'D'}
+              </span>
+              {loginName.trim() || 'Demo User'}'s Workspace
+              <span aria-hidden="true">⌄</span>
+            </summary>
+
+            <div className="absolute right-0 z-30 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+
+              <button
+                type="button"
+                onClick={signOut}
+                className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700"
+              >
+                Log Out
+              </button>
+            </div>
+          </details>
+        </div>
 
           {activePage === 'board' ? (
           <>
@@ -877,6 +1092,17 @@ Plan. Track. Deliver.  </p>
   </div>
 </details>
 </section>
+
+<div className="-mt-3 mb-4 flex justify-end">
+  <button
+    type="button"
+    onClick={exportTasksToCsv}
+    className="inline-flex items-center gap-2 rounded-xl bg-[#173D32] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#286B56] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216447]"
+  >
+    <span aria-hidden="true">↓</span>
+    Export CSV
+  </button>
+</div>
 
         <main
           aria-label="Project task board"
@@ -1520,7 +1746,7 @@ if (task) {
                   className="rounded-lg border border-rose-200 bg-rose-50 p-3"
                 >
                   <p className="mb-3 text-sm text-rose-900">
-                    Delete this task permanently?
+                    Delete this task?
                   </p>
                   <button
                     type="button"
@@ -1570,6 +1796,27 @@ if (task) {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {recentlyDeletedTask && (
+        <div
+          role="status"
+          className="fixed bottom-5 right-5 z-50 flex max-w-xs items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-900 shadow-lg"
+        >
+          <span aria-hidden="true" className="text-base">↩</span>
+
+          <span className="text-sm font-medium">
+            Task deleted
+          </span>
+
+          <button
+            type="button"
+            onClick={undoDelete}
+            className="ml-2 rounded-md bg-white px-3 py-1.5 text-sm font-bold text-rose-700 hover:bg-rose-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700"
+          >
+            Undo
+          </button>
         </div>
       )}
     </div>
