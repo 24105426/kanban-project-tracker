@@ -188,14 +188,14 @@ function getDeadlineStatus(task) {
   if (task.dueDate < todayString) {
     return {
       label: 'Overdue',
-      style: 'bg-red-100 text-red-800',
+      style: 'bg-[#B42335] text-white',
     };
   }
 
   if (task.dueDate === todayString) {
     return {
       label: 'Due today',
-      style: 'bg-[#F5D4BD] text-[#80340F]',
+      style: 'bg-[#A34C0B] text-white',
     };
   }
 
@@ -208,7 +208,7 @@ function getDeadlineStatus(task) {
   if (daysUntilDue <= 3) {
     return {
       label: 'Due soon',
-      style: 'bg-[#F8E8AC] text-[#68500D]',
+      style: 'bg-[#8A6512] text-white',
     };
   }
 
@@ -230,7 +230,7 @@ export default function App() {
     () => sessionStorage.getItem('projectTracker.demoLogin') === 'true'
   );
 
-  const [loginName, setLoginName] = useState('Cole');
+  const [loginName, setLoginName] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
@@ -1158,21 +1158,23 @@ Plan. Track. Deliver.  </p>
                       
                     >
                       <span
-                        className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${task.type === 'bug'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-[#E6F3EB] text-[#174D37]'
-                          }`}
+className={`inline-block rounded-md px-2.5 py-1 text-xs font-semibold ${
+  task.type === 'bug'
+    ? 'bg-rose-100 text-rose-800'
+    : 'bg-[#E6F3EB] text-[#174D37]'
+}`}
                       >
                         {task.type === 'bug' ? 'Bug' : 'Feature'}
                       </span>
 
                       <span
-                        className={`ml-2 inline-block rounded-md px-2 py-1 text-xs font-semibold ${(task.priority || 'medium') === 'high'
-                            ? 'bg-rose-100 text-rose-800'
-                            : (task.priority || 'medium') === 'medium'
-                              ? 'bg-amber-100 text-amber-900'
-                              : 'bg-slate-100 text-slate-700'
-                          }`}
+className={`ml-2 inline-block rounded-lg border bg-white px-2.5 py-1 text-xs font-semibold ${
+  (task.priority || 'medium') === 'high'
+    ? 'border-[#B42335] text-[#B42335]'
+    : (task.priority || 'medium') === 'medium'
+      ? 'border-[#B45309] text-[#92400E]'
+      : 'border-[#64748B] text-[#475569]'
+}`}
                       >
                         {(task.priority || 'medium').charAt(0).toUpperCase() +
                           (task.priority || 'medium').slice(1)} priority
@@ -1201,7 +1203,8 @@ Plan. Track. Deliver.  </p>
                         {getDeadlineStatus(task) && (
                           <p>
                             <span
-                              className={`inline-block rounded-md px-2 py-1 font-semibold ${getDeadlineStatus(task).style
+                              className={`inline-block rounded-md px-2 py-1 font-semibold ${
+                                getDeadlineStatus(task).style
                                 }`}
                             >
                               {getDeadlineStatus(task).label}
@@ -1427,10 +1430,8 @@ Plan. Track. Deliver.  </p>
 
     <div className="space-y-3">
       {teamWorkload.map((member, index) => (
-        <div
-          key={member.name}
-          className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-        >
+        <div key={member.name}>
+  <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#302824] text-sm font-bold text-white">
             {String(index + 1).padStart(2, '0')}
           </div>
@@ -1469,9 +1470,8 @@ onClick={() => {
   Remove
 </button>
         </div>
-      ))}
-    </div>
-    {editingMember !== null && (
+
+        {editingMember === member.name && (
   <form
     onSubmit={renameTeamMember}
     className="mt-4 rounded-xl border border-[#CCE9D8] bg-white p-5 shadow-sm"
@@ -1535,6 +1535,9 @@ onClick={() => {
     </div>
   </form>
 )}
+</div>
+))}
+</div>
 
   </section>
 </section>
