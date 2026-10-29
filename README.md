@@ -1,3 +1,30 @@
+# Kanban Project Tracker
+
+This is my Kanban project tracker, built using React, Vite and Tailwind CSS. It helps users organise tasks, keep track of deadlines and manage their team.
+
+## Live Website
+
+https://24105426.github.io/kanban-project-tracker/
+
+To access the tracker, enter your name and any password on the login page. This is a demo login, so no account or registration is needed.
+
+## Main Features
+
+- Four stage Kanban board for managing tasks.
+- Create, edit and delete tasks, with an option to undo deletions.
+- Search and filter tasks by assignee or priority.
+- Priority labels and deadline warnings.
+- Team directory with member and role management.
+- Project deliverables, progress tracking and team workload overview.
+- AI prompt context copying and CSV task export.
+- Responsive layout for different screen sizes.
+
+Data is stored locally in each user's browser rather than shared between users.
+
+---
+
+The original hackathon starter instructions are included below.
+
 # Vibecoding Project Tracker — Hackathon Starter
 
 You're forking this repo as the starting point for the **UXD Vibecoding Hackathon 2026**. The goal of the hackathon is to ship a Vibecoding Project Tracker in ~3 hours: a Kanban-style tool that tracks your vibecoding tasks and stores the prompts that produced them.
